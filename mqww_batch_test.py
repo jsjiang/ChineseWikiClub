@@ -95,13 +95,3 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
 
 
 
-#claim = pywikibot.Claim(repo, u'P21') #sex or gender
-#target = pywikibot.ItemPage(repo, u"Q6581097") # male
-#claim.setTarget(target) #Set the target value in the local object.
-#item.addClaim(claim, summary=u'Adding gender claim ')
-
-
-#claim = pywikibot.Claim(repo, u'P1559') #name in native language
-#target = pywikibot.WbMonolingualText(u'甘立媃', 'zh-hant')
-#claim.setTarget(target) #Set the target value in the local object.
-#item.addClaim(claim, summary=u'Adding name in native language claim')
