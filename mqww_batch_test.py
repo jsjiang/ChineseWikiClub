@@ -11,16 +11,21 @@ import pywikibot
 site = pywikibot.Site("wikidata", "wikidata")
 repo = site.data_repository()
 
-property_list = [
+# properties from MQWW DB
+property_mqww = [
 "P106",
 "P101",
 "P103",
 "P1412",
-"P1559",
 "P1787",
 "P1782",
 "P21",
 "P172",
+]
+
+# properties from CBDB
+property_cbdb = [
+"P1559",
 "P569",
 "P570",
 "P27"]
@@ -34,6 +39,8 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
     for row in reader:
         print(row)
         qid = row.get("qid")
+        poetID = row.get("poetID")
+        cbdb_id = row.get("CBDB_ID")
         if not qid:
             continue
 
@@ -45,7 +52,12 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
         for prop, val in row.items():
             if not val:
                 continue
-            if prop in property_list:
+            if prop in property_mqww + property_cbdb:
+                ref_url = None
+                if prop in property_mqww:
+                    ref_url = "https://digital.library.mcgill.ca/mingqing/search/details-poet.php?poetID={}".format(poetID)
+                elif prop in property_cbdb:
+                    ref_url = "https://cbdb.fas.harvard.edu/cbdbapi/person.php?id={}".format(cbdb_id)
                 new_val = True
                 if prop in claims:
                     print("claim exists: add additional value if it is new - p: {} val: {}".format(prop, val))
@@ -63,7 +75,6 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
                                 except Exception:
                                     current_val = target
 
-                        print(type(target))
                         print(current_val)
                         if current_val == val:
                             new_val = False
@@ -85,6 +96,11 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
 
                     claim.setTarget(target)
                     item.addClaim(claim, summary=u'Adding a statement')
+                    
+                    if ref_url:
+                        ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+                        ref.setTarget(ref_url)
+                        claim.addSources([ref], summary=u'Adding reference URL')
 
                     if prop in ['P1787', 'P1782']:    # add qualifier
                         qualifier = pywikibot.Claim(repo, "P282")     # writing system
