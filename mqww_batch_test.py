@@ -8,6 +8,8 @@ from pathlib import PurePosixPath
 
 import pywikibot
 
+pywikibot.config.put_throttle = 0
+
 site = pywikibot.Site("wikidata", "wikidata")
 repo = site.data_repository()
 
@@ -32,11 +34,14 @@ property_cbdb = [
 
 # input file header: property names
 # input file data: property values in Q number or string
-input_file = Path(os.getcwd()).joinpath("./indata/batch_test.csv")
+input_file = Path(os.getcwd()).joinpath("./indata/mqww_wiki_cbdb_batch_update_20220208.csv")
+line_no = 1
 with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
     reader = DictReader(csvfile)
 
     for row in reader:
+        line_no +=1
+        print("line_no: ",line_no)
         print(row)
         qid = row.get("qid")
         poetID = row.get("poetID")
@@ -54,7 +59,7 @@ with open(input_file, 'r', newline='', encoding="utf-8-sig") as csvfile:
                 continue
             if prop in property_mqww + property_cbdb:
                 ref_url = None
-                if prop in property_mqww:
+                if prop in property_mqww and prop != 'P103':
                     ref_url = "https://digital.library.mcgill.ca/mingqing/search/details-poet.php?poetID={}".format(poetID)
                 elif prop in property_cbdb:
                     ref_url = "https://cbdb.fas.harvard.edu/cbdbapi/person.php?id={}".format(cbdb_id)
