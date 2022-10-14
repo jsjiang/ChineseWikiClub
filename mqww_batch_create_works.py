@@ -96,17 +96,17 @@ def get_content_in_parentheses(a_str):
     return a_str[last_left_parenthesis:last_right_parenthesis-1].strip()
 
 get_dynansty_qnum = {
-    "Guangxu": "Q8733",
-    "Min guo": "Q13426199",
-    "Ming": "Q9903",
-    "Minguo": "Q13426199",
-    "QIng": "Q8733",
-    "Qing": "Q8733",
-    "Qing Guangxu": "Q8733",
-    "Qing mo": "Q8733",
-    "Qing mo Min chu": "Q8733，Q13426199",
-    "Xuantong": "Q8733",
-    "清": "Q8733"
+    "Guangxu": ["Q8733"],
+    "Min guo": ["Q13426199"],
+    "Ming": ["Q9903"],
+    "Minguo": ["Q13426199"],
+    "QIng": ["Q8733"],
+    "Qing": ["Q8733"],
+    "Qing Guangxu": ["Q8733"],
+    "Qing mo": ["Q8733"],
+    "Qing mo Min chu": ["Q8733", "Q13426199"],
+    "Xuantong": ["Q8733"],
+    "清": ["Q8733"]
 }
 
 mqww_work_url = "https://digital.library.mcgill.ca/mingqing/search/details-work.php"
@@ -197,63 +197,73 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         print(f"work_id: {work_id}")
         print(ref_url_P854)
 
-        country_p495 = None
+        country_P495 = None
         dateDynansty = row.get("DateDynastyPY")
         if dateDynansty:
-            country_p495 = get_dynansty_qnum[dateDynansty]
-        if country_p495:
-            print(f"{dateDynansty} - {country_p495}")
+            country_P495 = get_dynansty_qnum[dateDynansty]
+        if country_P495:
+            print(f"dateDynansty: {dateDynansty} - {country_P495}")
             print(ref_url_P854)
         else:
             print("dateDynansty: None")
         
-        inception_p571 = row.get("DateXF").strip()
-        inception_earliest_p1319 = None
-        inception_latest_p1326 = None
+        inception_P571 = row.get("DateXF").strip()
+        inception_earliest_P1319 = None
+        inception_latest_P1326 = None
 
-        if not inception_p571.isnumeric() or inception_p571 == '0':
-            inception_earliest_p1319 = row.get("PubStartYear").strip()
-            inception_latest_p1326 = row.get("PubEndYear").strip()
+        if not inception_P571.isnumeric() or inception_P571 == '0':
+            inception_earliest_P1319 = row.get("PubStartYear").strip()
+            inception_latest_P1326 = row.get("PubEndYear").strip()
 
-            if not inception_earliest_p1319.isnumeric() or inception_earliest_p1319 == '0':
-                inception_earliest_p1319 = None
+            if not inception_earliest_P1319.isnumeric() or inception_earliest_P1319 == '0':
+                inception_earliest_P1319 = None
 
-            if not inception_latest_p1326.isnumeric() or inception_latest_p1326 == '0':
-                inception_latest_p1326 = None
+            if not inception_latest_P1326.isnumeric() or inception_latest_P1326 == '0':
+                inception_latest_P1326 = None
             
-            inception_p571 = inception_earliest_p1319
-        else:
-            inception_earliest_p1319 = None
+            inception_P571 = inception_earliest_P1319
+
+            if inception_earliest_P1319 == inception_latest_P1326:
+                inception_earliest_P1319 = None
+                inception_latest_P1326 = None
         
-        if inception_p571:
-            print(f"inception_p571: {inception_p571}")
-        else:
-            print("inception_p571:: None")
-        if inception_earliest_p1319:
-            print(f"inception_earliest_p1319: {inception_earliest_p1319}")
-        if inception_latest_p1326:
-            print(f"inception_latest_p1326: {inception_latest_p1326}")
+        if inception_P571 and inception_latest_P1326 == '0':
+            inception_P571 = None
+        print(f"inception_P571: {inception_P571}")
+        
+        if inception_earliest_P1319:
+            print(f"inception_earliest_P1319: {inception_earliest_P1319}")
+        if inception_latest_P1326:
+            print(f"inception_latest_P1326: {inception_latest_P1326}")
         print(ref_url_P854)
+
+        claims = {
+            "P31": ["Q7725634", "Q12106333"], # instance of literary work, poetry collection
+            "P1476": title_P1476, 
+            "P136": ["Q482", "Q1069928"], # poetry, Chinese poetry
+            "P7937": "Q5185279", # form or creative work: poem
+            "P50": author_P50,
+            "P854": ref_url_P854,
+            "P495": country_P495,
+            "P407": "Q18130932",  # language of work: Traditional Chinese
+            "P571": inception_P571,
+            "P1319": inception_earliest_P1319,
+            "P1326": inception_latest_P1326
+        }
+
+        print(claims)
 
         #new_item_id = create_item(site, labels, descriptions) 
         #print("New Q No: {}".format(new_item_id))
 
-        #row['Q_No'] = new_item_id
+        #row['work_Q_No'] = new_item_id
         #writer.writerow(row)
 
         #print("wait 5 sec before updating new item")
         #time.sleep(5)
         #update_item(repo, new_item_id, row)
 
-print("#### entries for all ###")
-print("instance of (P31): literary work (Q7725634)")
-print("instance of (P31): poetry collection (Q12106333)")
 
-print("has edition or translation (P747): will be updated later once we create the edition level item")
-print("genre (P136): poetry (Q482)")
-print("genre (P136): Chinese poetry (Q1069928)")
-print("form of creative work (P7937):  poem (Q5185279)")
-print("language of work or name (P407)	Traditional Chinese (Q18130932)")
 
 print("Sample work: 樓居小草 https://www.wikidata.org/wiki/Q56653475")
 
