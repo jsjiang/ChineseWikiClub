@@ -104,7 +104,7 @@ get_dynansty_qnum = {
     "Qing": "Q8733",
     "Qing Guangxu": "Q8733",
     "Qing mo": "Q8733",
-    "Qing mo Min chu": "Q8733，Q13426199：how to handle two",
+    "Qing mo Min chu": "Q8733，Q13426199",
     "Xuantong": "Q8733",
     "清": "Q8733"
 }
@@ -176,8 +176,12 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         
         if row.get("Flag").lower() == "skip":
             print("Skip this label/desc: dup or already has a Q num")
-        else:
-            print("create new item label/desc:")
+            print(labels)
+            print(descriptions)
+            continue
+        
+        
+        print("create new item label/desc:")
         print(labels)
         print(descriptions)
  
@@ -203,15 +207,28 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         else:
             print("dateDynansty: None")
         
-
-        inception_p571 = row.get("DateXF")
+        inception_p571 = row.get("DateXF").strip()
         inception_earliest_p1319 = None
         inception_latest_p1326 = None
-        if len(inception_p571) > 4:
-            inception_p571 = row.get("PubStartYear")
-            inception_earliest_p1319 = row.get("PubStartYear")
-            inception_latest_p1326 = row.get("PubEndYear")
-        print(f"inception_p571: {inception_p571}")
+
+        if not inception_p571.isnumeric() or inception_p571 == '0':
+            inception_earliest_p1319 = row.get("PubStartYear").strip()
+            inception_latest_p1326 = row.get("PubEndYear").strip()
+
+            if not inception_earliest_p1319.isnumeric() or inception_earliest_p1319 == '0':
+                inception_earliest_p1319 = None
+
+            if not inception_latest_p1326.isnumeric() or inception_latest_p1326 == '0':
+                inception_latest_p1326 = None
+            
+            inception_p571 = inception_earliest_p1319
+        else:
+            inception_earliest_p1319 = None
+        
+        if inception_p571:
+            print(f"inception_p571: {inception_p571}")
+        else:
+            print("inception_p571:: None")
         if inception_earliest_p1319:
             print(f"inception_earliest_p1319: {inception_earliest_p1319}")
         if inception_latest_p1326:
