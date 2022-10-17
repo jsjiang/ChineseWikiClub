@@ -22,71 +22,77 @@ def create_item(site, label_dict, desc_dict):
     new_item.editDescriptions(desc_dict, summary="Setting new descriptions.")
     return new_item.getID()
 
-def update_item(repo, item_id, row):
+def update_item(repo, item_id, claims):
     item = pywikibot.ItemPage(repo, item_id)
-    claims = item.get()["claims"]
-    #print(claims)
+    current_claims = item.get()["claims"]
+   
+    """claims = {
+            "P31": ["Q7725634", "Q12106333"], # instance of literary work, poetry collection
+            "P1476": title_P1476, 
+            "P136": ["Q482", "Q1069928"], # poetry, Chinese poetry
+            "P7937": ["Q5185279"], # form or creative work: poem
+            "P50": author_P50,
+            "P854": ref_url_P854,
+            "P495": country_P495, # list of qnums
+            "P407": ["Q18130932"],  # language of work: Traditional Chinese
+            "P571": inception_P571,
+            "P1319": inception_earliest_P1319,
+            "P1326": inception_latest_P1326
+        }
+    """
+    claims_with_qids = ["P31", "P136", "P495", "P407"]
+    claims_zh_hant = ["P1476"]
+    ref_url = claims.get("P854")
+    p50_author = claims.get("P50")
 
-    # add core statements
-    # instance of (P31)     ancient county of China (Q28739697)
-    # country (P17) china (Q29520)
-    # official name (P1448) xx
-    # native label (p1705)  xx
-    # coordinate location (P625)    xx
-    # CHGIS ID (P4711)      xx
-    # located in time zone (P421)    UTC+08:00
-
-    if row["feature_type_eng"] == "county":
-        claim = pywikibot.Claim(repo, u'P31')
-        target = pywikibot.ItemPage(repo, u"Q28739697")
+    if "P50" not in current_claims and p50_author:
+        claim = pywikibot.Claim(repo, u"P50")
+        target = pywikibot.ItemPage(repo, p50_author)
         claim.setTarget(target)
-        item.addClaim(claim, summary=u"Adding instance of")
+        ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+        ref.setTarget(ref_url)
+        claim.addSources([ref], summary=u'Adding reference URL')
+        item.addClaim(claim)
 
-    claim = pywikibot.Claim(repo, u'P17') 
-    target = pywikibot.ItemPage(repo, u"Q29520") 
-    claim.setTarget(target)
-    item.addClaim(claim, summary=u"Adding country")
+    for key in claims_zh_hant:
+        if key not in current_claims and claims.get(key):
+            claim = pywikibot.Claim(repo, key)
+            target = pywikibot.WbMonolingualText(claims.get(key), 'zh-hant')   
+            claim.setTarget(target)
+            item.addClaim(claim)
 
-    claim = pywikibot.Claim(repo, u'P1448')
-    target = pywikibot.WbMonolingualText(row["traditional Chinese"], 'zh-hant')   
-    claim.setTarget(target)
-    item.addClaim(claim, summary=u"Adding official name")
-    # add time period
-    qualifier = pywikibot.Claim(repo, "P580")     # start time
-    target = pywikibot.WbTime(year=int(row["temporal_begin"]))
-    qualifier.setTarget(target)
-    claim.addQualifier(qualifier, summary=u'Adding a qualifier start time.')
-    qualifier = pywikibot.Claim(repo, "P582")     # end time
-    target = pywikibot.WbTime(year=int(row["temporal_end"]))
-    qualifier.setTarget(target)
-    claim.addQualifier(qualifier, summary=u'Adding a qualifier start time.')
+    for key in claims_with_qids:
+        if key not in current_claims and claims.get(key):
+            for qid in claims.get(key):
+                claim = pywikibot.Claim(repo, key)
+                target = pywikibot.ItemPage(repo, qid)
+                claim.setTarget(target)
+                item.addClaim(claim)
 
-    claim = pywikibot.Claim(repo, u'P1705')
-    target = pywikibot.WbMonolingualText(row["traditional Chinese"], 'zh-hant')   
-    claim.setTarget(target)
-    item.addClaim(claim, summary=u"Adding native label")
+    p571 = claims.get("P571")
+    p1319 = claims.get("P1319")
+    p1326 = claims.get("P1326")
+    if "P571" not in current_claims and p571:
+        claim = pywikibot.Claim(repo, "P571")
+        target = pywikibot.WbTime(year=int(p571))
+        claim.setTarget(target)
+        ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+        ref.setTarget(ref_url)
+        claim.addSources([ref], summary=u'Adding reference URL')
+        item.addClaim(claim)
 
-    lat=float(row["y_latitude"])
-    lon=float(row["x_longitude"])
-    ref_url = row["uri"]
-    claim  = pywikibot.Claim(repo, u'P625') #Adding coordinate location (P625)
-    coordinate = pywikibot.Coordinate(lat=lat, lon=lon, precision=0.001) #With location markes
-    claim.setTarget(coordinate)
-    item.addClaim(claim, summary=u'Adding coordinate claim')
-
-    ref = pywikibot.Claim(repo, u'P854')  # Reference URL
-    ref.setTarget(ref_url)
-    claim.addSources([ref], summary=u'Adding reference URL')
-
-    claim = pywikibot.Claim(repo, u'P4711')
-    claim.setTarget(row["CHGIS_PT_ID"])
-    item.addClaim(claim, summary=u"Adding CHGIS ID")
-
-    claim = pywikibot.Claim(repo, u'P421')
-    target = pywikibot.ItemPage(repo, u"Q6985")
-    claim.setTarget(target)
-    item.addClaim(claim, summary=u"Adding time zone")
-
+        if p1319:
+            qualifier = pywikibot.Claim(repo, "P1319")     # start time
+            target = pywikibot.WbTime(year=int(p1319))
+            qualifier.setTarget(target)
+            claim.addQualifier(qualifier)
+        if p1326:
+            qualifier = pywikibot.Claim(repo, "P1326")     # start time
+            target = pywikibot.WbTime(year=int(p1326))
+            qualifier.setTarget(target)
+            claim.addQualifier(qualifier)
+        
+        
 def get_content_in_parentheses(a_str):
     """note: there might be more than one parentheses
     """
@@ -111,17 +117,26 @@ get_dynansty_qnum = {
 
 mqww_work_url = "https://digital.library.mcgill.ca/mingqing/search/details-work.php"
 
-input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flaged.csv")
-output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output.csv")
+input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_first_2-5.csv")
+output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_first_2-5.csv")
+item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_first_2-5.csv")
+
 output = open(output_filename, 'w', newline='')
+items = open(item_filename, 'w', newline='')
+items_fieldnames = ["workID", "lables", "descriptions", "claims", "work_qid"]
+
 line_no = 1
 with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
     reader = DictReader(csvfile)
  
     fieldnames = reader.fieldnames
+    fieldnames.append('work_qid')
     print(fieldnames)
     writer = DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
+
+    writer_items = DictWriter(items, fieldnames=items_fieldnames)
+    writer_items.writeheader()
 
     for row in reader:
         line_no +=1
@@ -179,7 +194,6 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             print(labels)
             print(descriptions)
             continue
-        
         
         print("create new item label/desc:")
         print(labels)
@@ -241,11 +255,11 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             "P31": ["Q7725634", "Q12106333"], # instance of literary work, poetry collection
             "P1476": title_P1476, 
             "P136": ["Q482", "Q1069928"], # poetry, Chinese poetry
-            "P7937": "Q5185279", # form or creative work: poem
+            "P7937": ["Q5185279"], # form or creative work: poem
             "P50": author_P50,
             "P854": ref_url_P854,
-            "P495": country_P495,
-            "P407": "Q18130932",  # language of work: Traditional Chinese
+            "P495": country_P495,  # list of qnums
+            "P407": ["Q18130932"],  # language of work: Traditional Chinese
             "P571": inception_P571,
             "P1319": inception_earliest_P1319,
             "P1326": inception_latest_P1326
@@ -253,20 +267,27 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
 
         print(claims)
 
-        #new_item_id = create_item(site, labels, descriptions) 
-        #print("New Q No: {}".format(new_item_id))
+        new_item_id = create_item(site, labels, descriptions)
+        print("New Q No: {}".format(new_item_id))
 
-        #row['work_Q_No'] = new_item_id
-        #writer.writerow(row)
+        row['work_qid'] = new_item_id
+        writer.writerow(row)
 
-        #print("wait 5 sec before updating new item")
-        #time.sleep(5)
-        #update_item(repo, new_item_id, row)
+        items_row = {
+            "workID": work_id,
+            "lables": labels,
+            "descriptions": descriptions,
+            "claims": claims,
+            "work_qid": new_item_id
+        }
+        writer_items.writerow(items_row)
 
-
-
-print("Sample work: 樓居小草 https://www.wikidata.org/wiki/Q56653475")
+        print("wait 5 sec before updating new item")
+        time.sleep(5)
+        update_item(repo, new_item_id, claims)
+        print(f"updating new item {new_item_id} completed.")
 
 output.close()
+items.close()
 
 
