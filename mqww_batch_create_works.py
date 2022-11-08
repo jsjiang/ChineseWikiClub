@@ -124,9 +124,9 @@ get_dynansty_qnum = {
 
 mqww_work_url = "https://digital.library.mcgill.ca/mingqing/search/details-work.php"
 
-input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_first_2-5.csv")
-output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_first_2-5.csv")
-item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_first_2-5.csv")
+input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_first_6-10.csv")
+output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_first_6-10.csv")
+item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_first_6-10.csv")
 
 output = open(output_filename, 'w', newline='')
 items = open(item_filename, 'w', newline='')
@@ -258,7 +258,7 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             print(f"inception_latest_P1326: {inception_latest_P1326}")
         print(ref_url_P854)
 
-        claims = {
+        property_values = {
             "P31": ["Q7725634", "Q12106333"], # instance of literary work, poetry collection
             "P1476": title_P1476, 
             "P136": ["Q482", "Q1069928"], # poetry, Chinese poetry
@@ -273,7 +273,7 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             "P1343": ["Q111326267"],
         }
 
-        print(claims)
+        print(property_values)
 
         item_id = row.get('work_qid')
         if item_id is None or item_id.strip() == '':
@@ -287,14 +287,14 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             "workID": work_id,
             "lables": labels,
             "descriptions": descriptions,
-            "claims": claims,
+            "claims": property_values,
             "work_qid": item_id
         }
         writer_items.writerow(items_row)
 
         print("wait 5 sec before updating new item")
         time.sleep(5)
-        update_item(repo, item_id, claims)
+        update_item(repo, item_id, property_values)
         print(f"updating new item {item_id} completed.")
 
 output.close()
