@@ -22,11 +22,11 @@ def create_item(site, label_dict, desc_dict):
     new_item.editDescriptions(desc_dict, summary="Setting new descriptions.")
     return new_item.getID()
 
-def update_item(repo, item_id, claims):
+def update_item(repo, item_id, property_values):
     item = pywikibot.ItemPage(repo, item_id)
     current_claims = item.get()["claims"]
    
-    """claims = {
+    """property_values = {
             "P31": ["Q7725634", "Q12106333"], # instance of literary work, poetry collection
             "P1476": title_P1476, 
             "P136": ["Q482", "Q1069928"], # poetry, Chinese poetry
@@ -37,13 +37,14 @@ def update_item(repo, item_id, claims):
             "P407": ["Q18130932"],  # language of work: Traditional Chinese
             "P571": inception_P571,
             "P1319": inception_earliest_P1319,
-            "P1326": inception_latest_P1326
+            "P1326": inception_latest_P1326,
+            "P1343": ["Q111326267"]
         }
     """
-    claims_with_qids = ["P31", "P136", "P495", "P407"]
+    claims_with_qids = ["P31", "P136", "P7937", "P495", "P407", "P1343"]
     claims_zh_hant = ["P1476"]
-    ref_url = claims.get("P854")
-    p50_author = claims.get("P50")
+    ref_url = property_values.get("P854")
+    p50_author = property_values.get("P50")
 
     if "P50" not in current_claims and p50_author:
         claim = pywikibot.Claim(repo, u"P50")
@@ -55,23 +56,29 @@ def update_item(repo, item_id, claims):
         item.addClaim(claim)
 
     for key in claims_zh_hant:
-        if key not in current_claims and claims.get(key):
+        if key not in current_claims and property_values.get(key):
             claim = pywikibot.Claim(repo, key)
-            target = pywikibot.WbMonolingualText(claims.get(key), 'zh-hant')   
+            target = pywikibot.WbMonolingualText(property_values.get(key), 'zh-hant')   
             claim.setTarget(target)
+            ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+            ref.setTarget(ref_url)
+            claim.addSources([ref], summary=u'Adding reference URL')
             item.addClaim(claim)
 
     for key in claims_with_qids:
-        if key not in current_claims and claims.get(key):
-            for qid in claims.get(key):
+        if key not in current_claims and property_values.get(key):
+            for qid in property_values.get(key):
                 claim = pywikibot.Claim(repo, key)
                 target = pywikibot.ItemPage(repo, qid)
                 claim.setTarget(target)
+                ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+                ref.setTarget(ref_url)
+                claim.addSources([ref], summary=u'Adding reference URL')
                 item.addClaim(claim)
 
-    p571 = claims.get("P571")
-    p1319 = claims.get("P1319")
-    p1326 = claims.get("P1326")
+    p571 = property_values.get("P571")
+    p1319 = property_values.get("P1319")
+    p1326 = property_values.get("P1326")
     if "P571" not in current_claims and p571:
         claim = pywikibot.Claim(repo, "P571")
         target = pywikibot.WbTime(year=int(p571))
@@ -262,15 +269,18 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             "P407": ["Q18130932"],  # language of work: Traditional Chinese
             "P571": inception_P571,
             "P1319": inception_earliest_P1319,
-            "P1326": inception_latest_P1326
+            "P1326": inception_latest_P1326,
+            "P1343": ["Q111326267"],
         }
 
         print(claims)
 
-        new_item_id = create_item(site, labels, descriptions)
-        print("New Q No: {}".format(new_item_id))
-
-        row['work_qid'] = new_item_id
+        item_id = row.get('work_qid')
+        if item_id is None or item_id.strip() == '':
+            item_id = create_item(site, labels, descriptions)
+            print("New Q No: {}".format(item_id))
+            row['work_qid'] = item_id
+        
         writer.writerow(row)
 
         items_row = {
@@ -278,14 +288,14 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
             "lables": labels,
             "descriptions": descriptions,
             "claims": claims,
-            "work_qid": new_item_id
+            "work_qid": item_id
         }
         writer_items.writerow(items_row)
 
         print("wait 5 sec before updating new item")
         time.sleep(5)
-        update_item(repo, new_item_id, claims)
-        print(f"updating new item {new_item_id} completed.")
+        update_item(repo, item_id, claims)
+        print(f"updating new item {item_id} completed.")
 
 output.close()
 items.close()
