@@ -125,9 +125,9 @@ get_dynansty_qnum = {
 
 mqww_work_url = "https://digital.library.mcgill.ca/mingqing/search/details-work.php"
 
-input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_after_10.csv")
-output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_after_10.csv")
-item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_after_10.csv")
+input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_after_10_2nd_run.csv")
+output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_after_10_2nd_run.csv")
+item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_after_10_2nd_run.csv")
 
 output = open(output_filename, 'w', newline='')
 items = open(item_filename, 'w', newline='')
@@ -138,7 +138,7 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
     reader = DictReader(csvfile)
  
     fieldnames = reader.fieldnames
-    fieldnames.append('work_qid')
+    #fieldnames.append('work_qid')
     print(fieldnames)
     writer = DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
@@ -155,7 +155,8 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         titleHZ = row.get('TitleHZ')
         # replace "（" with "(", "）" with ")";
         # replace "﹕" and "：" with ":"
-        titleHZ = titleHZ.replace("（", "(").replace("）", ")").replace("﹕", ":").replace("：", ":")
+        titleHZ = titleHZ.replace("（", "(").replace("）", ")").replace("﹕", ":").replace("：", ":").replace(" ", "")
+        titleHZ = titleHZ.strip()
 
         label_en = titlePY
         seps = [":", "("]
@@ -277,10 +278,13 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         print(property_values)
 
         item_id = row.get('work_qid')
+        print("work_qid: ", item_id)
         if item_id is None or item_id.strip() == '':
             item_id = create_item(site, labels, descriptions)
             print("New Q No: {}".format(item_id))
             row['work_qid'] = item_id
+            print("wait 5 sec before updating new item")
+            time.sleep(5)
         
         writer.writerow(row)
 
@@ -293,8 +297,6 @@ with open(input_filename, 'r', newline='', encoding="utf-8-sig") as csvfile:
         }
         writer_items.writerow(items_row)
 
-        print("wait 5 sec before updating new item")
-        time.sleep(5)
         update_item(repo, item_id, property_values)
         print(f"updating new item {item_id} completed.")
 
