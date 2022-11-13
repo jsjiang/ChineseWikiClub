@@ -71,9 +71,10 @@ def update_item(repo, item_id, property_values):
                 claim = pywikibot.Claim(repo, key)
                 target = pywikibot.ItemPage(repo, qid)
                 claim.setTarget(target)
-                ref = pywikibot.Claim(repo, u'P854')  # Reference URL
-                ref.setTarget(ref_url)
-                claim.addSources([ref], summary=u'Adding reference URL')
+                if key != "P31":
+                    ref = pywikibot.Claim(repo, u'P854')  # Reference URL
+                    ref.setTarget(ref_url)
+                    claim.addSources([ref], summary=u'Adding reference URL')
                 item.addClaim(claim)
 
     p571 = property_values.get("P571")
@@ -124,9 +125,9 @@ get_dynansty_qnum = {
 
 mqww_work_url = "https://digital.library.mcgill.ca/mingqing/search/details-work.php"
 
-input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_first_6-10.csv")
-output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_first_6-10.csv")
-item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_first_6-10.csv")
+input_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_flagged_after_10.csv")
+output_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_output_after_10.csv")
+item_filename = Path(os.getcwd()).joinpath("./indata/poet_with_Q_work_230220709_item_after_10.csv")
 
 output = open(output_filename, 'w', newline='')
 items = open(item_filename, 'w', newline='')
